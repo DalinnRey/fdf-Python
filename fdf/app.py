@@ -1,7 +1,38 @@
 import tkinter as tk
 
-from fdf.model import Map
+# Импортируем Map для работы с картой и Point для работы с отдельными точками.
+from fdf.model import Map, Point
 from fdf.projection import Camera
+
+# Стандартный цвет линий, если у точки не указан собственный цвет.
+DEFAULT_LINE_COLOR = "#DDE7F0"
+
+
+def _get_edge_color(point: Point, neighbor: Point) -> str:
+    """Определяет цвет линии между двумя соседними точками."""
+
+    # Проверяем, есть ли цвет у первой точки.
+    if point.color is None:
+
+        # Если цвета нет у обеих точек, возвращаем стандартный.
+        if neighbor.color is None:
+            return DEFAULT_LINE_COLOR
+
+        # Если цвет есть только у соседней точки, используем его.
+        return neighbor.color
+
+    # Если цвет есть только у первой точки, используем его.
+    if neighbor.color is None:
+        return point.color
+
+    # Если у обеих точек разные цвета, сравниваем их высоты.
+    if point.z >= neighbor.z:
+
+        # Используем цвет точки, которая находится выше.
+        return point.color
+
+    # Если соседняя точка выше, используем её цвет.
+    return neighbor.color
 
 
 class App:
@@ -62,28 +93,31 @@ class App:
         self.canvas.delete("all")
 
         for y, row in enumerate(self.map_data.points):
+            # Перебираем каждую точку в текущей строке.
             for x, point in enumerate(row):
-
+                 # Переводим координаты точки в координаты окна.
                 x1, y1 = self.camera.project(point)
 
                 # Соединяем с точкой справа
                 if x + 1 < self.map_data.width:
                     right = self.map_data.points[y][x + 1]
+                    edge_color = _get_edge_color(point, right)
                     x2, y2 = self.camera.project(right)
 
                     self.canvas.create_line(
                         x1, y1, x2, y2,
-                        fill="#DDE7F0",
+                        fill=edge_color,
                         width=2
                     )
 
                 # Соединяем с точкой снизу
                 if y + 1 < self.map_data.height:
                     below = self.map_data.points[y + 1][x]
+                    edge_color = _get_edge_color(point, below)
                     x2, y2 = self.camera.project(below)
 
                     self.canvas.create_line(
                         x1, y1, x2, y2,
-                        fill="#DDE7F0",
+                        fill=edge_color,
                         width=2
                     )
