@@ -61,7 +61,12 @@ def _parse_value(
 def parse_map(path: str | Path) -> Map:
     """Читает файл FDF и возвращает модель карты."""
 
-    text = Path(path).read_text(encoding="utf-8")
+    try:
+        text = Path(path).read_text(encoding="utf-8")
+    except UnicodeDecodeError as exc:
+        raise MapFormatError(
+        "Файл карты должен быть в кодировке UTF-8."
+        ) from exc
     lines = text.splitlines()
 
     # Убираем пустые строки только в конце файла.

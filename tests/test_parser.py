@@ -48,9 +48,25 @@ def test_parse_elem_map() -> None:
         "1,0xGG",
     ],
 )
+
+
 def test_invalid_maps(tmp_path: Path, content: str) -> None:
     file = tmp_path / "bad.fdf"
     file.write_text(content, encoding="utf-8")
 
     with pytest.raises(MapFormatError):
+        parse_map(file)
+
+
+def test_parse_map_invalid_encoding(tmp_path: Path) -> None:
+    """Проверяет обработку файла с неправильной кодировкой."""
+
+    # Создаём временный файл для тестирования.
+    file = tmp_path / "invalid_encoding.fdf"
+
+    # Записываем байт, который не является допустимым UTF-8.
+    file.write_bytes(b"\xff")
+
+    # Проверяем, что парсер выдаёт нашу ошибку MapFormatError, а не необработанную ошибку UnicodeDecodeError.
+    with pytest.raises(MapFormatError, match="UTF-8"):
         parse_map(file)
