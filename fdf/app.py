@@ -60,6 +60,18 @@ class App:
 
         # Завершение программы по Esc
         self.root.bind("<Escape>", self._on_escape)
+        # Увеличение и уменьшение масштаба.
+        # Основная клавиатура и цифровой блок.
+        self.root.bind("<plus>", self._on_zoom_in)
+        self.root.bind("<minus>", self._on_zoom_out)
+        self.root.bind("<KP_Add>", self._on_zoom_in)
+        self.root.bind("<KP_Subtract>", self._on_zoom_out)
+
+        # Перемещение модели стрелками клавиатуры.
+        self.root.bind("<Left>", self._on_move_left)
+        self.root.bind("<Right>", self._on_move_right)
+        self.root.bind("<Up>", self._on_move_up)
+        self.root.bind("<Down>", self._on_move_down)
 
         # Завершение программы при закрытии окна
         self.root.protocol(
@@ -75,16 +87,65 @@ class App:
         """Закрывает программу при нажатии Esc."""
         self.root.destroy()
 
-    def _on_resize(self, _event: tk.Event) -> None:
-        """Пересчитывает проекцию при изменении размера окна."""
+    def _on_zoom_in(self, _event: tk.Event) -> None:
+        """Увеличивает масштаб модели."""
 
+        # Увеличиваем пользовательский масштаб на 10%.
+        self.camera.zoom(1.1)
+
+        # Пересчитываем положение модели и перерисовываем её.
+        self._update_view()
+
+    def _on_zoom_out(self, _event: tk.Event) -> None:
+        """Уменьшает масштаб модели."""
+
+        # Уменьшаем масштаб примерно на 9,1%.
+        self.camera.zoom(1 / 1.1)
+
+        # Пересчитываем положение модели и перерисовываем её.
+        self._update_view()
+
+    def _on_move_left(self, _event: tk.Event) -> None:
+        """Перемещает модель влево."""
+        self.camera.move(-20, 0)
+        self._draw()
+
+    def _on_move_right(self, _event: tk.Event) -> None:
+        """Перемещает модель вправо."""
+        self.camera.move(20, 0)
+        self._draw()
+
+    def _on_move_up(self, _event: tk.Event) -> None:
+        """Перемещает модель вверх."""
+        self.camera.move(0, -20)
+        self._draw()
+
+    def _on_move_down(self, _event: tk.Event) -> None:
+        """Перемещает модель вниз."""
+        self.camera.move(0, 20)
+        self._draw()
+
+    def _on_resize(self, _event: tk.Event) -> None:
+        """Обрабатывает изменение размера окна."""
+
+        # При изменении размера окна обновляем положение модели.
+        self._update_view()
+
+    def _update_view(self) -> None:
+        """Пересчитывает камеру и перерисовывает модель."""
+
+        # Получаем текущие размеры области рисования.
         width = self.canvas.winfo_width()
         height = self.canvas.winfo_height()
 
+        # Не выполняем расчёты, если размеры ещё не определены.
         if width <= 1 or height <= 1:
             return
 
+        # Подгоняем модель под окно с учётом Zoom и сдвига.
         self.camera.fit(self.map_data, width, height)
+
+        # Рисуем модель заново.
         self._draw()
 
     def _draw(self) -> None:
